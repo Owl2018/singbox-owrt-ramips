@@ -60,10 +60,13 @@ jobs:
       - name: Build sing-box package (.ipk)
         working-directory: sdk
         env:
-          MAKE_JOBS: 2
-          TERM: dumb  # <-- Добавьте это
+          MAKE_JOBS: 1  # Уменьшаем количество параллельных задач
+          TERM: dumb
         run: |
-          make package/sing-box/compile V=s || ( find build_dir -name "config.log" -exec cat {} \; || echo "No config.log found" ; exit 1 )
+          # Убедимся, что .config актуален
+          make defconfig
+          # Запускаем компиляцию без подробного вывода
+          make package/sing-box/compile || ( find build_dir -name "config.log" -exec cat {} \; || echo "No config.log found" ; exit 1 )
           
       - name: Upload .ipk artifact
         uses: actions/upload-artifact@v4
