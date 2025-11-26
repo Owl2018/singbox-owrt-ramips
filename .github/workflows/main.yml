@@ -19,7 +19,7 @@ jobs:
 
       - name: Download OpenWrt SDK (ramips/mt7621 - 24.10.4)
         run: |
-          SDK_URL="https://downloads.openwrt.org/releases/24.10.4/targets/ramips/mt7621/openwrt-sdk-24.10.4-ramips-mt7621_gcc-13.2.0_musl.Linux-x86_64.tar.xz"
+          SDK_URL="https://downloads.openwrt.org/releases/24.10.4/targets/ramips/mt7621/openwrt-sdk-24.10.4-ramips-mt7621_gcc-13.3.0_musl.Linux-x86_64.tar.zst"
           wget -q --show-progress "$SDK_URL"
           tar xf openwrt-sdk-*.tar.xz
           SDK_DIR=$(ls -d openwrt-sdk-*)
