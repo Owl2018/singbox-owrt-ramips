@@ -1,0 +1,65 @@
+name: Build sing-box OpenWrt 24.10.4 (mipsel_24kc)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-singbox:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout (repo only for workflow)
+        uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget xz-utils build-essential git python3 bc
+
+      - name: Download OpenWrt SDK (ramips/mt7621 - 24.10.4)
+        run: |
+          SDK_URL="https://downloads.openwrt.org/releases/24.10.4/targets/ramips/mt7621/openwrt-sdk-24.10.4-ramips-mt7621_gcc-13.2.0_musl.Linux-x86_64.tar.xz"
+          wget -q --show-progress "$SDK_URL"
+          tar xf openwrt-sdk-*.tar.xz
+          SDK_DIR=$(ls -d openwrt-sdk-*)
+          mv "$SDK_DIR" sdk
+          echo "SDK extracted to sdk/"
+          ls -lah sdk
+
+      - name: Clone OpenWrt packages and copy sing-box package
+        run: |
+          cd sdk/package
+          git clone --depth 1 https://github.com/openwrt/packages.git tmp-packages
+          cp -r tmp-packages/net/sing-box ./sing-box
+          rm -rf tmp-packages
+          echo "Copied sing-box package to sdk/package/sing-box"
+
+      - name: Enable full Go tags (gRPC + xhttp + quic + etc)
+        run: |
+          cd sdk/package/sing-box
+          cp Makefile Makefile.orig || true
+          sed -i 's@^GO_PKG_TAGS.*@GO_PKG_TAGS:=with_conf with_grpc with_quic with_utls with_xhttp with_dhcp with_wireguard with_shadowsocksr with_redirect with_tproxy with_clash_api@' Makefile
+          echo "Updated GO_PKG_TAGS:"
+          grep GO_PKG_TAGS Makefile
+
+      - name: Prepare feed indexes
+        working-directory: sdk
+        run: |
+          ./scripts/feeds update -a || true
+          ./scripts/feeds install -a || true
+
+      - name: Build sing-box package (.ipk)
+        working-directory: sdk
+        env:
+          MAKE_JOBS: 2
+        run: |
+          make package/sing-box/compile V=s || ( cat build_dir/target-*/sing-box*/config.log || true ; exit 1 )
+          echo "Listing generated IPK:"
+          ls -lh bin/packages/mipsel_24kc/base/ || true
+
+      - name: Upload .ipk artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sing-box-mipsel_24kc-ipk
+          path: sdk/bin/packages/mipsel_24kc/base/*.ipk
