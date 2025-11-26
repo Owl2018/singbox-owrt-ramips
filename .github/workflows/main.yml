@@ -21,6 +21,8 @@ jobs:
         run: |
           SDK_URL="https://downloads.openwrt.org/releases/24.10.4/targets/ramips/mt7621/openwrt-sdk-24.10.4-ramips-mt7621_gcc-13.3.0_musl.Linux-x86_64.tar.zst"
           wget -q --show-progress "$SDK_URL"
+          # Устанавливаем zstd для поддержки распаковки .tar.zst
+          sudo apt-get install -y zstd
           tar -xf openwrt-sdk-*.tar.zst
           SDK_DIR=$(ls -d openwrt-sdk-*)
           mv "$SDK_DIR" sdk
