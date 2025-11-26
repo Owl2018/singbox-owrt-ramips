@@ -24,7 +24,13 @@ jobs:
           # Устанавливаем zstd для поддержки распаковки .tar.zst
           sudo apt-get install -y zstd
           tar -xf openwrt-sdk-*.tar.zst
-          SDK_DIR=$(ls -d openwrt-sdk-*)
+          # Ищем только директорию, соответствующую openwrt-sdk-*
+          SDK_DIR=$(find . -maxdepth 1 -type d -name 'openwrt-sdk-*' -print -quit)
+          if [ -z "$SDK_DIR" ]; then
+            echo "ERROR: SDK directory not found after extraction." >&2
+            ls -la  # Показать содержимое для отладки
+            exit 1
+          fi
           mv "$SDK_DIR" sdk
           echo "SDK extracted to sdk/"
           ls -lah sdk
