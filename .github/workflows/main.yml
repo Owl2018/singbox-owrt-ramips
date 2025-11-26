@@ -61,11 +61,10 @@ jobs:
         working-directory: sdk
         env:
           MAKE_JOBS: 2
+          TERM: dumb  # <-- Добавьте это
         run: |
-          make package/sing-box/compile V=s || ( cat build_dir/target-*/sing-box*/config.log || true ; exit 1 )
-          echo "Listing generated IPK:"
-          ls -lh bin/packages/mipsel_24kc/base/ || true
-
+          make package/sing-box/compile V=s || ( find build_dir -name "config.log" -exec cat {} \; || echo "No config.log found" ; exit 1 )
+          
       - name: Upload .ipk artifact
         uses: actions/upload-artifact@v4
         with:
